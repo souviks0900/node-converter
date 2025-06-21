@@ -9,7 +9,8 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
-const PORT = 3001;
+const PORT = 3001; // default port for the server
+// Ensure the downloads directory exists
 const downloadsDir = path.join(__dirname, 'downloads');
 
 app.set('view engine', 'ejs');
