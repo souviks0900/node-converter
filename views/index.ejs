@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HTML to PDF/PPTX Converter</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 500px; margin: auto; }
+        label, select, input { display: block; margin: 15px 0 5px 0; }
+        button { margin-top: 20px; }
+        #download-link { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Upload HTML File to Convert</h2>
+        <form id="convert-form">
+            <label for="file">Choose HTML file:</label>
+            <input type="file" id="file" accept=".html,.htm" required />
+
+            <label for="format">Select format:</label>
+            <select id="format" required>
+                <option value="pdf">PDF</option>
+                <option value="pptx">PPTX</option>
+            </select>
+
+            <button type="submit">Convert</button>
+        </form>
+        <div id="download-link"></div>
+        <div id="loader" style="display:none; margin-top:20px;">Converting, please wait...</div>
+    </div>
+    <script>
+        document.getElementById('convert-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('file');
+            const format = document.getElementById('format').value;
+            const downloadDiv = document.getElementById('download-link');
+            const loader = document.getElementById('loader');
+            downloadDiv.innerHTML = '';
+
+            if (!fileInput.files.length) {
+                alert('Please select an HTML file.');
+                return;
+            }
+
+            loader.style.display = 'block';
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                const htmlContent = event.target.result;
+                // Convert to base64
+                const base64Html = btoa(unescape(encodeURIComponent(htmlContent)));
+
+                // Send to backend
+                try {
+                    const response = await fetch('/convert-html', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ base64Html, format })
+                    });
+
+                    const data = await response.json();
+                    if (data.downloadUrl) {
+                        downloadDiv.innerHTML = `<a href="${data.downloadUrl}" download>Download Converted File</a>`;
+                    } else {
+                        downloadDiv.innerHTML = `<span style="color:red;">${data.error || 'Conversion failed.'}</span>`;
+                    }
+                } catch (err) {
+                    downloadDiv.innerHTML = `<span style="color:red;">Request failed.</span>`;
+                } finally {
+                    loader.style.display = 'none';
+                }
+            };
+            reader.readAsText(file);
+        });
+    </script>
+</body>
+</html>
